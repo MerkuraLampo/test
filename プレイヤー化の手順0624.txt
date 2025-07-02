@@ -1,0 +1,116 @@
+【プレイヤー化の手順】
+
+>>>>>プレイヤーアニメーションのインポート<<<<<<
+①　UEに新規フォルダーの作成
+②　Blenderで制作した***.fbxファイルをドラッグ＆ドロップ
+③　rootフォルダーの***Mixamo.fbxファイルをドラッグ＆ドロップ
+　　アニメーションタグをクリック
+　　Import Animations のチェックマーク外す
+　　インポートボタンをクリック
+④　rootフォルダーの***Mixamo.fbxファイル以外を全選択しドラッグ＆ドロップ
+　　アニメーションタグをクリック
+　　Import Animations のチェックマークを付ける
+　　Import Only Animations のチェックマークを付ける
+　　上記のチェックマークを確認後、インポートボタンをクリック
+⑤　各種データをフォルダーにまとめる
+　　animation,materials,meshフォルダー
+
+>>>>>ブレンドスペースの制作<<<<<<
+⑥　速度に応じてアニメーションを切り替えるプログラムを作成
+　　ブレンドスペースを起動しスケルタルメッシュを選択し、名前**_BSをつける
+　　水平軸の名前をSpeedひ変更、MaximumAxisVale を400に変更
+⑦　速度にアニメーションをドラック＆ドロップ
+　　各ポイントを(0,0),(200,0),(400,0)に設定する
+
+>>>>>アニメーションチェンジのブループリント制作<<<<<<
+⑧　速度がいくつか判定してブレンドスペースを呼び出すブループリントを作成
+　　アニメーションブループリントを選択し、名前を***_AnimBPに変更
+　　New StateMachineを選択しLocomotionに名前を変更
+　　Locomotionから引っ張り出してSlot'DefaultSlot'を選択
+⑨　LocomotionをクリックしEntryからノード(ブレンドスぺ－ス)を接続
+　　ブレンドスペースを開き、speedを変数化する（変数化すると中身を
+　　変更できる）
+⑩　ジャンプアニメーションはブレンドスペースに接続
+　　歩きからジャンプの矢印と、ジャンプから歩きに戻る矢印を接続する
+⑪　〇→をダブルクリックし変数に昇格させ名前を「jumpFlag」に変更する
+⑫　〇←上記の変数「jumpFlag」と[NOT]を接続する
+
+>>>>>speedとjumpFlagの変数にデータをセット<<<<<<
+
+⑬　イベントグラフのタグをクリック
+　　プレイヤーが存在しているか？をチェック
+　　VelocityをGetし大きさだけとりだし、Speedの接続
+　　is Fallingの条件をjumpFlagに接続
+
+
+>>>>>プレイヤーキャラのブループリントの作成<<<<<<
+⑭　新規ブループリントの作成
+　　親クラス選択は歩行能力のある「キャラクター」を選択し、名前を変更[BP_Player1]
+    BP_Player1を開きmeshをクリックし、詳細のメッシュにRoboApx1Mixamo.fbxを指定
+　　カプセルの下ぎりぎりまで足元のカーソルを移動
+　　回転アイコンに切り替え９０度回転し正面を向ける
+　　Apx1_AnimBPを詳細のアニメーションのAnimクラスに登録
+⑮　カメラのセッティング
+　　カメラを接続する「自撮り棒」を設定する
+　　自撮り棒の先にカメラを追加
+
+>>>>>プレイヤーキャラをMapに表示<<<<<<
+⑯　ゲームモードの作成
+　　Mapごとに制作、親クラス選択は「ゲームモードベース」選択し、
+    名前を変更[P1_GameMode]
+    P1GameModeを開き「デフォルトのポーンクラス」にBP_Player1を定義
+　　P1_GameModeを「ワールドセッティング」のゲームモードオーバーライドに定義
+
+
+>>>>>プレイヤーキャラの移動とジャンプ<<<<<<
+⑰　キーボードの設定
+　　キーボードの割り当てを制作
+	・入力アクション：：キーの状態
+	　ValueType（Digtal=押したor押されてない
+	　Triggers（押される <押しっぱなし,離した,長押し etc..)
+	・入力マッピングコンテキスト：：キーの割り当て
+      マッピングの横の+を押して、インプットアクションを登録
+      スペースキーを選択し追加、ゲームパッドのAボタンも追加
+    ・同様にマウスのLボタン、Rボタンのインプットアクションを定義
+    　マッピングコンテキストに追加
+    ・カメラの視点変更用にマウスの横移動をインプットアクション定義
+    　名前を「IA_Turn」にする
+    ・IA_TurnのValueTypeはAxis1D(float)に変更
+    　マウスのX軸とゲームパッドのサムスティック右x軸を
+    　マッピングコンテキストに追加
+    ・IA_LookUpのValueTypeはAxis1D(float)に変更
+    　マウスのY軸とゲームパッドのサムスティック右Y軸を
+    　マッピングコンテキストに追加
+
+	・プレイヤーブループリントにマッピングの登録を行う
+	・IA_jumpをプレイヤーブループリントから呼び出し、「jump」関数を接続
+	・ジャンプアニメーションのしゃがむアニメーションをカットする
+
+	・カメラの横回転
+	  IA_Turnの呼び出し、[add controller Yaw input]の接続
+	  Action value を[add controller Yaw input]のValに接続
+	・回転設定の変更
+	　1)springArm カメラセッティングの[Use Pawn Control Rotation]にチェックを入れる
+				　[Inherit Roll]のチェックをはずす
+	　2)Character Movementコンポーネントの「歩行」のMaxSpeedを400に変更
+	　　　　　　　[orient rotation to movement]にチェックを入れる
+	　3)クラスのデフォルトのポーンの[Use Controller Rotation yaw]のチェックを外す
+	　
+	・移動
+	　IA_WS、IA_ADを制作しマッピングに追加
+	　「S」とパッドの「下」はマイナスの反転をModifiersに[Negate]設定する
+	　1)IA_WSを呼び出し「Add Movement Input」を接続
+	　　ActionValueを「Add Movement Input」のScaleValueに接続
+		Get Contorol Rotationでプレイヤーの角度を算出
+		必要な角度はZのみなので[MakeRotator]で角度を制作し直す
+		必要な方向は前方なので「get forward Vectoor」をWorldDirectionに接続
+		IA_ADを呼び出し「get Right Vectoor」をWorldDirectionに接続
+
+
+>>>>>プレイヤーキャラの攻撃<<<<<<
+	・アニメーションシーケンスを右クリックし「作成する」→「AnimMontageを作成」
+	　選び名前を「P1Kick1_MTG」のようにPlayerの1番とわかるようにP1を付けること
+	・BP_Player1を開き、「IA_MouseL」イベントを呼び出し[PlayAnimMontage]を接続
+	　[AnimMontage]に「P1Kick1_MTG」を指定
+	・同様に「IA_MouseR」イベントを呼び出し[AnimMontage]に「P1Kick2_MTG」を指定
+
